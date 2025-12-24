@@ -100,12 +100,72 @@ export default function Contact() {
         })
       });
 
-      if (response.ok) {
-        setIsSubmitted(true);
-      } else {
+      if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         throw new Error(errorData.detail || `Error: ${response.status} - Failed to send message`);
       }
+
+      // Send confirmation email to the user
+      const confirmationSubject = 'Thank you for contacting CoreCrest';
+      const confirmationBody = `<div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+    <div style="background: linear-gradient(135deg, #16a34a, #15803d); color: white; padding: 20px; border-radius: 8px 8px 0 0; text-align: center;">
+        <h1 style="margin: 0; font-size: 24px; font-weight: bold;">Thank You for Contacting CoreCrest</h1>
+    </div>
+    
+    <div style="background: #f8f9fa; padding: 20px; border: 1px solid #e9ecef; border-top: none;">
+        <div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+            <p style="color: #1e293b; font-size: 16px; margin: 0 0 15px 0;">Hello ${formData.name},</p>
+            <p style="color: #1e293b; font-size: 16px; margin: 0 0 15px 0;">Thank you for reaching out to CoreCrest! We've received your message and will get back to you within 24 hours.</p>
+        </div>
+        
+        <div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+            <h2 style="color: #16a34a; margin-top: 0; margin-bottom: 15px; font-size: 18px; border-bottom: 2px solid #16a34a; padding-bottom: 8px;">YOUR MESSAGE SUMMARY</h2>
+            <table style="width: 100%; border-collapse: collapse;">
+                <tr><td style="padding: 8px 0; font-weight: bold; color: #1e293b; width: 30%;">Subject:</td><td style="padding: 8px 0;">${formData.subject}</td></tr>
+                <tr><td style="padding: 8px 0; font-weight: bold; color: #1e293b;">Submitted:</td><td style="padding: 8px 0;">${new Date().toLocaleString()}</td></tr>
+            </table>
+        </div>
+        
+        <div style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+            <h2 style="color: #16a34a; margin-top: 0; margin-bottom: 15px; font-size: 18px; border-bottom: 2px solid #16a34a; padding-bottom: 8px;">WHAT HAPPENS NEXT?</h2>
+            <p style="color: #1e293b; font-size: 14px; margin: 0 0 10px 0;">Our team will review your message and respond to you at <strong>${formData.email}</strong> within 24 hours.</p>
+            <p style="color: #1e293b; font-size: 14px; margin: 0;">If you have any urgent questions, feel free to call us at <a href="tel:+250788863783" style="color: #16a34a; text-decoration: none;">+250 788 863 783</a>.</p>
+        </div>
+    </div>
+    
+    <div style="background: #1e293b; color: white; padding: 15px; border-radius: 0 0 8px 8px; text-align: center; font-size: 12px;">
+        <p style="margin: 0;">CoreCrest - Practical Tech Solutions for Small Businesses</p>
+        <p style="margin: 5px 0 0 0;">Kigali, Rwanda | <a href="mailto:info@corecrest.tech" style="color: #16a34a; text-decoration: none;">info@corecrest.tech</a></p>
+    </div>
+</div>`;
+
+      try {
+        await fetch('https://bff.corecrest.tech/api/submit/contact', {
+          method: 'POST',
+          headers: {
+            'accept': 'application/json',
+            'Content-Type': 'application/json',
+            'Origin': window.location.origin,
+          },
+          credentials: 'omit',
+          mode: 'cors',
+          body: JSON.stringify({
+            recipient: formData.email,
+            subject: confirmationSubject,
+            body: confirmationBody,
+            body_type: 'html',
+            content_encoding: 'plain',
+            priority: 2,
+            notification_type: 'email',
+            source: 'corecrest-confirmation'
+          })
+        });
+      } catch (confirmationError) {
+        // Log but don't fail the main submission if confirmation email fails
+        console.error('Failed to send confirmation email:', confirmationError);
+      }
+
+      setIsSubmitted(true);
     } catch (error: unknown) {
       console.error('Error sending message:', error);
       if (error instanceof TypeError && error.message.includes('Failed to fetch')) {

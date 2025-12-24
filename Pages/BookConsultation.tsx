@@ -150,12 +150,88 @@ export default function BookConsultation() {
         })
       });
 
-      if (response.ok) {
-        setIsSubmitted(true);
-      } else {
+      if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         throw new Error(errorData.detail || `Error: ${response.status} - Failed to send booking request`);
       }
+
+      // Send confirmation email to the user
+      const confirmationSubject = `Growth Diagnostic Confirmation - ${serviceLabel}`;
+      const confirmationBody = `<div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+    <div style="background: linear-gradient(135deg, #16a34a, #15803d); color: white; padding: 20px; border-radius: 8px 8px 0 0; text-align: center;">
+        <h1 style="margin: 0; font-size: 24px; font-weight: bold;">Growth Diagnostic Booked!</h1>
+    </div>
+    
+    <div style="background: #f8f9fa; padding: 20px; border: 1px solid #e9ecef; border-top: none;">
+        <div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+            <p style="color: #1e293b; font-size: 16px; margin: 0 0 15px 0;">Hello ${formData.full_name},</p>
+            <p style="color: #1e293b; font-size: 16px; margin: 0 0 15px 0;">Thank you for booking your Growth Diagnostic with CoreCrest! We've received your request and will confirm your appointment shortly.</p>
+            <p style="color: #1e293b; font-size: 16px; margin: 0;">You'll receive a follow-up email within 24 hours to confirm the exact time and provide any additional details.</p>
+        </div>
+        
+        <div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+            <h2 style="color: #16a34a; margin-top: 0; margin-bottom: 15px; font-size: 18px; border-bottom: 2px solid #16a34a; padding-bottom: 8px;">YOUR DIAGNOSTIC DETAILS</h2>
+            <table style="width: 100%; border-collapse: collapse;">
+                <tr><td style="padding: 8px 0; font-weight: bold; color: #1e293b; width: 30%;">Service Interest:</td><td style="padding: 8px 0; background: #dcfce7; padding: 8px; border-radius: 4px; color: #15803d;">${serviceLabel}</td></tr>
+                <tr><td style="padding: 8px 0; font-weight: bold; color: #1e293b;">Preferred Date:</td><td style="padding: 8px 0;">${formattedDate}</td></tr>
+                <tr><td style="padding: 8px 0; font-weight: bold; color: #1e293b;">Preferred Time:</td><td style="padding: 8px 0;">${formData.preferred_time} (Rwanda Time)</td></tr>
+                <tr><td style="padding: 8px 0; font-weight: bold; color: #1e293b;">Submitted:</td><td style="padding: 8px 0;">${new Date().toLocaleString()}</td></tr>
+            </table>
+        </div>
+        
+        <div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+            <h2 style="color: #16a34a; margin-top: 0; margin-bottom: 15px; font-size: 18px; border-bottom: 2px solid #16a34a; padding-bottom: 8px;">WHAT HAPPENS NEXT?</h2>
+            <p style="color: #1e293b; font-size: 14px; margin: 0 0 10px 0;">Our team will review your request and send you a confirmation email within 24 hours with:</p>
+            <ul style="color: #1e293b; font-size: 14px; margin: 0; padding-left: 20px;">
+                <li>Confirmed appointment date and time</li>
+                <li>Meeting details (video call link or location)</li>
+                <li>What to prepare for the diagnostic</li>
+            </ul>
+        </div>
+        
+        <div style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+            <h2 style="color: #16a34a; margin-top: 0; margin-bottom: 15px; font-size: 18px; border-bottom: 2px solid #16a34a; padding-bottom: 8px;">NEED TO MAKE CHANGES?</h2>
+            <p style="color: #1e293b; font-size: 14px; margin: 0 0 10px 0;">If you need to reschedule or have any questions, please contact us:</p>
+            <p style="color: #1e293b; font-size: 14px; margin: 0;">
+                Email: <a href="mailto:info@corecrest.tech" style="color: #16a34a; text-decoration: none;">info@corecrest.tech</a><br>
+                Phone: <a href="tel:+250788863783" style="color: #16a34a; text-decoration: none;">+250 788 863 783</a>
+            </p>
+        </div>
+    </div>
+    
+    <div style="background: #1e293b; color: white; padding: 15px; border-radius: 0 0 8px 8px; text-align: center; font-size: 12px;">
+        <p style="margin: 0;">CoreCrest - Practical Tech Solutions for Small Businesses</p>
+        <p style="margin: 5px 0 0 0;">Kigali, Rwanda | <a href="mailto:info@corecrest.tech" style="color: #16a34a; text-decoration: none;">info@corecrest.tech</a></p>
+    </div>
+</div>`;
+
+      try {
+        await fetch('https://bff.corecrest.tech/api/submit/contact', {
+          method: 'POST',
+          headers: {
+            'accept': 'application/json',
+            'Content-Type': 'application/json',
+            'Origin': window.location.origin,
+          },
+          credentials: 'omit',
+          mode: 'cors',
+          body: JSON.stringify({
+            recipient: formData.email,
+            subject: confirmationSubject,
+            body: confirmationBody,
+            body_type: 'html',
+            content_encoding: 'plain',
+            priority: 2,
+            notification_type: 'email',
+            source: 'corecrest-consultation-confirmation'
+          })
+        });
+      } catch (confirmationError) {
+        // Log but don't fail the main submission if confirmation email fails
+        console.error('Failed to send confirmation email:', confirmationError);
+      }
+
+      setIsSubmitted(true);
     } catch (error: unknown) {
       console.error('Error sending booking request:', error);
       if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
@@ -350,7 +426,13 @@ export default function BookConsultation() {
                       onValueChange={(value) => setFormData({ ...formData, service_interest: value })}
                     >
                       <SelectTrigger className={`h-12 ${errors.service_interest ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : 'focus:border-green-500 focus:ring-green-500'}`}>
-                        <SelectValue placeholder="Select a service" />
+                        {formData.service_interest ? (
+                          <span className="text-slate-900">
+                            {services.find(s => s.value === formData.service_interest)?.label || formData.service_interest}
+                          </span>
+                        ) : (
+                          <span className="text-slate-400">Select a service</span>
+                        )}
                       </SelectTrigger>
                       <SelectContent>
                         {services.map((service) => (
