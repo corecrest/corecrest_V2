@@ -24,7 +24,7 @@ export default function Hero() {
             transition={{ duration: 0.6 }}
           >
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-slate-900 leading-tight mb-6">
-              Fix the tech weak points that are costing your business customers, time, and money.
+              Make Technology Work for Your Business.
             </h1>
             <h2 className="sr-only">Innovation at the Heart of Africa — Websites & Tech Solutions That Help Small Businesses Grow</h2>
 
