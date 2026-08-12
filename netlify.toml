@@ -1,0 +1,4 @@
+# Build settings stay in the Netlify UI; this only declares the functions dir.
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"

@@ -42,17 +42,11 @@ export default function Contact() {
     e.preventDefault();
     if (!validateForm()) return;
 
-    // Bots fill the hidden field; show them success and send nothing.
-    if (honeypot) {
-      setIsSubmitted(true);
-      return;
-    }
-
     setIsSubmitting(true);
     setSubmitError('');
 
     try {
-      await submitContactForm(formData);
+      await submitContactForm(formData, honeypot);
       setIsSubmitted(true);
     } catch (error: unknown) {
       console.error('Error sending message:', error);

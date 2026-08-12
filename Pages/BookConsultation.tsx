@@ -79,12 +79,6 @@ export default function BookConsultation() {
     e.preventDefault();
     if (!validateForm()) return;
 
-    // Bots fill the hidden field; show them success and send nothing.
-    if (honeypot) {
-      setIsSubmitted(true);
-      return;
-    }
-
     setIsSubmitting(true);
     setSubmitError('');
 
@@ -96,7 +90,7 @@ export default function BookConsultation() {
         formattedDate: formData.preferred_date
           ? format(formData.preferred_date, 'MMMM d, yyyy')
           : 'Not specified',
-      });
+      }, honeypot);
       setIsSubmitted(true);
     } catch (error: unknown) {
       console.error('Error sending booking request:', error);
