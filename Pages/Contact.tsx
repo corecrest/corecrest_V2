@@ -3,13 +3,15 @@ import { Link } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { motion } from 'framer-motion';
 import SEO from '../components/SEO';
+import HoneypotField from '../components/HoneypotField';
+import { submitContactForm } from '../lib/email';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { 
   Phone, Mail, MapPin, Clock, Send, CheckCircle, 
-  Loader2, ArrowRight, MessageCircle 
+  Loader2, ArrowRight, MessageCircle, AlertCircle 
 } from 'lucide-react';
 
 export default function Contact() {
@@ -22,6 +24,8 @@ export default function Contact() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [submitError, setSubmitError] = useState('');
+  const [honeypot, setHoneypot] = useState('');
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
@@ -38,141 +42,25 @@ export default function Contact() {
     e.preventDefault();
     if (!validateForm()) return;
 
+    // Bots fill the hidden field; show them success and send nothing.
+    if (honeypot) {
+      setIsSubmitted(true);
+      return;
+    }
+
     setIsSubmitting(true);
-    
+    setSubmitError('');
+
     try {
-      // Prepare the email body (formatted for better readability)
-      const emailSubject = `Website Inquiry: ${formData.subject}`;
-      const emailBody = `<div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-    <div style="background: linear-gradient(135deg, #0d9488, #0f766e); color: white; padding: 20px; border-radius: 8px 8px 0 0; text-align: center;">
-        <h1 style="margin: 0; font-size: 24px; font-weight: bold;">NEW CONTACT FORM SUBMISSION</h1>
-    </div>
-    
-    <div style="background: #f8f9fa; padding: 20px; border: 1px solid #e9ecef; border-top: none;">
-        <div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-            <h2 style="color: #0d9488; margin-top: 0; margin-bottom: 15px; font-size: 18px; border-bottom: 2px solid #0d9488; padding-bottom: 8px;">CLIENT INFORMATION</h2>
-            <table style="width: 100%; border-collapse: collapse;">
-                <tr><td style="padding: 8px 0; font-weight: bold; color: #1e293b; width: 30%;">Name:</td><td style="padding: 8px 0;">${formData.name}</td></tr>
-                <tr><td style="padding: 8px 0; font-weight: bold; color: #1e293b;">Email:</td><td style="padding: 8px 0;"><a href="mailto:${formData.email}" style="color: #0d9488; text-decoration: none;">${formData.email}</a></td></tr>
-                <tr><td style="padding: 8px 0; font-weight: bold; color: #1e293b;">Subject:</td><td style="padding: 8px 0; background: #dcfce7; padding: 8px; border-radius: 4px; color: #0f766e;">${formData.subject}</td></tr>
-            </table>
-        </div>
-        
-        <div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-            <h2 style="color: #0d9488; margin-top: 0; margin-bottom: 15px; font-size: 18px; border-bottom: 2px solid #0d9488; padding-bottom: 8px;">MESSAGE DETAILS</h2>
-            <div style="background: #f8f9fa; padding: 15px; border-radius: 6px; border-left: 4px solid #0d9488; white-space: pre-wrap;">${formData.message.replace(/\n/g, '<br>')}</div>
-        </div>
-        
-        <div style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-            <h2 style="color: #0d9488; margin-top: 0; margin-bottom: 15px; font-size: 18px; border-bottom: 2px solid #0d9488; padding-bottom: 8px;">SUBMISSION DETAILS</h2>
-            <table style="width: 100%; border-collapse: collapse;">
-                <tr><td style="padding: 8px 0; font-weight: bold; color: #1e293b; width: 30%;">Submission Time:</td><td style="padding: 8px 0;">${new Date().toLocaleString()}</td></tr>
-                <tr><td style="padding: 8px 0; font-weight: bold; color: #1e293b;">Source:</td><td style="padding: 8px 0;">CoreCrest Website Contact Form</td></tr>
-                <tr><td style="padding: 8px 0; font-weight: bold; color: #1e293b;">Priority:</td><td style="padding: 8px 0; background: #dcfce7; color: #0f766e; padding: 4px 8px; border-radius: 4px; display: inline-block;">Normal</td></tr>
-            </table>
-        </div>
-    </div>
-    
-    <div style="background: #1e293b; color: white; padding: 15px; border-radius: 0 0 8px 8px; text-align: center; font-size: 12px;">
-        This email was automatically generated from the CoreCrest website.
-    </div>
-</div>`;
-
-      // Send the data to the API
-      const response = await fetch('https://bff.corecrest.tech/api/submit/contact', {
-        method: 'POST',
-        headers: {
-          'accept': 'application/json',
-          'Content-Type': 'application/json',
-          'Origin': window.location.origin,
-        },
-        credentials: 'omit',
-        mode: 'cors',
-        body: JSON.stringify({
-          recipient: 'info@corecrest.tech',
-          subject: emailSubject,
-          body: emailBody,
-          body_type: 'html',
-          content_encoding: 'plain',
-          priority: 2,
-          notification_type: 'email',
-          source: 'corecrest'
-        })
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.detail || `Error: ${response.status} - Failed to send message`);
-      }
-
-      // Send confirmation email to the user
-      const confirmationSubject = 'Thank you for contacting CoreCrest';
-      const confirmationBody = `<div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-    <div style="background: linear-gradient(135deg, #0d9488, #0f766e); color: white; padding: 20px; border-radius: 8px 8px 0 0; text-align: center;">
-        <h1 style="margin: 0; font-size: 24px; font-weight: bold;">Thank You for Contacting CoreCrest</h1>
-    </div>
-    
-    <div style="background: #f8f9fa; padding: 20px; border: 1px solid #e9ecef; border-top: none;">
-        <div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-            <p style="color: #1e293b; font-size: 16px; margin: 0 0 15px 0;">Hello ${formData.name},</p>
-            <p style="color: #1e293b; font-size: 16px; margin: 0 0 15px 0;">Thank you for reaching out to CoreCrest! We've received your message and will get back to you within 24 hours.</p>
-        </div>
-        
-        <div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-            <h2 style="color: #0d9488; margin-top: 0; margin-bottom: 15px; font-size: 18px; border-bottom: 2px solid #0d9488; padding-bottom: 8px;">YOUR MESSAGE SUMMARY</h2>
-            <table style="width: 100%; border-collapse: collapse;">
-                <tr><td style="padding: 8px 0; font-weight: bold; color: #1e293b; width: 30%;">Subject:</td><td style="padding: 8px 0;">${formData.subject}</td></tr>
-                <tr><td style="padding: 8px 0; font-weight: bold; color: #1e293b;">Submitted:</td><td style="padding: 8px 0;">${new Date().toLocaleString()}</td></tr>
-            </table>
-        </div>
-        
-        <div style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-            <h2 style="color: #0d9488; margin-top: 0; margin-bottom: 15px; font-size: 18px; border-bottom: 2px solid #0d9488; padding-bottom: 8px;">WHAT HAPPENS NEXT?</h2>
-            <p style="color: #1e293b; font-size: 14px; margin: 0 0 10px 0;">Our team will review your message and respond to you at <strong>${formData.email}</strong> within 24 hours.</p>
-            <p style="color: #1e293b; font-size: 14px; margin: 0;">If you have any urgent questions, feel free to call us at <a href="tel:+250788863783" style="color: #0d9488; text-decoration: none;">+250 788 863 783</a>.</p>
-        </div>
-    </div>
-    
-    <div style="background: #1e293b; color: white; padding: 15px; border-radius: 0 0 8px 8px; text-align: center; font-size: 12px;">
-        <p style="margin: 0;">CoreCrest - Practical Tech Solutions for Small Businesses</p>
-        <p style="margin: 5px 0 0 0;">Kigali, Rwanda | <a href="mailto:info@corecrest.tech" style="color: #0d9488; text-decoration: none;">info@corecrest.tech</a></p>
-    </div>
-</div>`;
-
-      try {
-        await fetch('https://bff.corecrest.tech/api/submit/contact', {
-          method: 'POST',
-          headers: {
-            'accept': 'application/json',
-            'Content-Type': 'application/json',
-            'Origin': window.location.origin,
-          },
-          credentials: 'omit',
-          mode: 'cors',
-          body: JSON.stringify({
-            recipient: formData.email,
-            subject: confirmationSubject,
-            body: confirmationBody,
-            body_type: 'html',
-            content_encoding: 'plain',
-            priority: 2,
-            notification_type: 'email',
-            source: 'corecrest-confirmation'
-          })
-        });
-      } catch (confirmationError) {
-        // Log but don't fail the main submission if confirmation email fails
-        console.error('Failed to send confirmation email:', confirmationError);
-      }
-
+      await submitContactForm(formData);
       setIsSubmitted(true);
     } catch (error: unknown) {
       console.error('Error sending message:', error);
-      if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
-        alert('Unable to connect to the server. Please check your internet connection and try again.');
-      } else {
-        alert((error instanceof Error ? error.message : 'Failed to send message. Please try again later.'));
-      }
+      setSubmitError(
+        error instanceof TypeError && error.message.includes('Failed to fetch')
+          ? 'Unable to connect to the server. Please check your internet connection and try again.'
+          : 'Something went wrong sending your message. Please try again, or email us directly at info@corecrest.tech.'
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -348,7 +236,9 @@ export default function Contact() {
                   Fill out the form below and we'll get back to you shortly.
                 </p>
 
-                <form onSubmit={handleSubmit} className="space-y-6">
+                <form onSubmit={handleSubmit} className="space-y-6 relative">
+                  <HoneypotField value={honeypot} onChange={setHoneypot} />
+
                   <div className="grid sm:grid-cols-2 gap-6">
                     <div>
                       <Label htmlFor="name" className="text-slate-700">Your Name *</Label>
@@ -398,6 +288,16 @@ export default function Contact() {
                     />
                     {errors.message && <p className="text-red-500 text-sm mt-1">{errors.message}</p>}
                   </div>
+
+                  {submitError && (
+                    <div
+                      role="alert"
+                      className="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700"
+                    >
+                      <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+                      <span>{submitError}</span>
+                    </div>
+                  )}
 
                   <Button
                     type="submit"

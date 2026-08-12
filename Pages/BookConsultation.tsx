@@ -10,9 +10,11 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { format } from 'date-fns';
 import { 
   Calendar as CalendarIcon, Clock, CheckCircle, ArrowRight, 
-  Phone, Mail, MapPin, Loader2
+  Phone, Mail, MapPin, Loader2, AlertCircle
 } from 'lucide-react';
 import SEO from '../components/SEO';
+import HoneypotField from '../components/HoneypotField';
+import { submitConsultationForm } from '../lib/email';
 
 const services = [
   { value: 'website_development', label: 'Websites That Convert' },
@@ -40,6 +42,8 @@ export default function BookConsultation() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [submitError, setSubmitError] = useState('');
+  const [honeypot, setHoneypot] = useState('');
 
   // Check for service param in URL
   useEffect(() => {
@@ -75,170 +79,32 @@ export default function BookConsultation() {
     e.preventDefault();
     if (!validateForm()) return;
 
+    // Bots fill the hidden field; show them success and send nothing.
+    if (honeypot) {
+      setIsSubmitted(true);
+      return;
+    }
+
     setIsSubmitting(true);
-    
+    setSubmitError('');
+
     try {
-      // Prepare the email body (formatted for better readability)
-      const serviceLabel = services.find(s => s.value === formData.service_interest)?.label || formData.service_interest;
-      const emailSubject = `Growth Diagnostic Booking: ${serviceLabel}`;
-      const formattedDate = formData.preferred_date ? format(formData.preferred_date, 'MMMM d, yyyy') : 'Not specified';
-      
-      const emailBody = `<div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-    <div style="background: linear-gradient(135deg, #0d9488, #0f766e); color: white; padding: 20px; border-radius: 8px 8px 0 0; text-align: center;">
-        <h1 style="margin: 0; font-size: 24px; font-weight: bold;">NEW GROWTH DIAGNOSTIC BOOKING</h1>
-    </div>
-    
-    <div style="background: #f8f9fa; padding: 20px; border: 1px solid #e9ecef; border-top: none;">
-        <div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-            <h2 style="color: #0d9488; margin-top: 0; margin-bottom: 15px; font-size: 18px; border-bottom: 2px solid #0d9488; padding-bottom: 8px;">CLIENT INFORMATION</h2>
-            <table style="width: 100%; border-collapse: collapse;">
-                <tr><td style="padding: 8px 0; font-weight: bold; color: #1e293b; width: 30%;">Name:</td><td style="padding: 8px 0;">${formData.full_name}</td></tr>
-                <tr><td style="padding: 8px 0; font-weight: bold; color: #1e293b;">Email:</td><td style="padding: 8px 0;"><a href="mailto:${formData.email}" style="color: #0d9488; text-decoration: none;">${formData.email}</a></td></tr>
-                <tr><td style="padding: 8px 0; font-weight: bold; color: #1e293b;">Phone:</td><td style="padding: 8px 0;"><a href="tel:${formData.phone}" style="color: #0d9488; text-decoration: none;">${formData.phone}</a></td></tr>
-                <tr><td style="padding: 8px 0; font-weight: bold; color: #1e293b;">Company:</td><td style="padding: 8px 0;">${formData.company || 'Not provided'}</td></tr>
-            </table>
-        </div>
-        
-        <div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-            <h2 style="color: #0d9488; margin-top: 0; margin-bottom: 15px; font-size: 18px; border-bottom: 2px solid #0d9488; padding-bottom: 8px;">CONSULTATION DETAILS</h2>
-            <table style="width: 100%; border-collapse: collapse;">
-                <tr><td style="padding: 8px 0; font-weight: bold; color: #1e293b; width: 30%;">Service Interest:</td><td style="padding: 8px 0; background: #dcfce7; padding: 8px; border-radius: 4px; color: #0f766e;">${serviceLabel}</td></tr>
-                <tr><td style="padding: 8px 0; font-weight: bold; color: #1e293b;">Preferred Date:</td><td style="padding: 8px 0;">${formattedDate}</td></tr>
-                <tr><td style="padding: 8px 0; font-weight: bold; color: #1e293b;">Preferred Time:</td><td style="padding: 8px 0;">${formData.preferred_time} (Rwanda Time)</td></tr>
-            </table>
-        </div>
-        
-        ${formData.project_details ? `<div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-            <h2 style="color: #0d9488; margin-top: 0; margin-bottom: 15px; font-size: 18px; border-bottom: 2px solid #0d9488; padding-bottom: 8px;">PROJECT DESCRIPTION</h2>
-            <div style="background: #f8f9fa; padding: 15px; border-radius: 6px; border-left: 4px solid #0d9488; white-space: pre-wrap;">${formData.project_details.replace(/\n/g, '<br>')}</div>
-        </div>` : ''}
-        
-        <div style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-            <h2 style="color: #0d9488; margin-top: 0; margin-bottom: 15px; font-size: 18px; border-bottom: 2px solid #0d9488; padding-bottom: 8px;">SUBMISSION DETAILS</h2>
-            <table style="width: 100%; border-collapse: collapse;">
-                <tr><td style="padding: 8px 0; font-weight: bold; color: #1e293b; width: 30%;">Submission Time:</td><td style="padding: 8px 0;">${new Date().toLocaleString()}</td></tr>
-                <tr><td style="padding: 8px 0; font-weight: bold; color: #1e293b;">Source:</td><td style="padding: 8px 0;">CoreCrest Growth Diagnostic Booking</td></tr>
-                <tr><td style="padding: 8px 0; font-weight: bold; color: #1e293b;">Priority:</td><td style="padding: 8px 0; background: #dcfce7; color: #0f766e; padding: 4px 8px; border-radius: 4px; display: inline-block;">High</td></tr>
-            </table>
-        </div>
-    </div>
-    
-    <div style="background: #1e293b; color: white; padding: 15px; border-radius: 0 0 8px 8px; text-align: center; font-size: 12px;">
-        This email was automatically generated from the CoreCrest website.
-    </div>
-</div>`;
-
-      // Send the data to the API
-      const response = await fetch('https://bff.corecrest.tech/api/submit/contact', {
-        method: 'POST',
-        headers: {
-          'accept': 'application/json',
-          'Content-Type': 'application/json',
-          'Origin': window.location.origin,
-        },
-        credentials: 'omit',
-        mode: 'cors',
-        body: JSON.stringify({
-          recipient: 'info@corecrest.tech',
-          subject: emailSubject,
-          body: emailBody,
-          body_type: 'html',
-          content_encoding: 'plain',
-          priority: 2,
-          notification_type: 'email',
-          source: 'corecrest'
-        })
+      await submitConsultationForm({
+        ...formData,
+        serviceLabel:
+          services.find((s) => s.value === formData.service_interest)?.label || formData.service_interest,
+        formattedDate: formData.preferred_date
+          ? format(formData.preferred_date, 'MMMM d, yyyy')
+          : 'Not specified',
       });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.detail || `Error: ${response.status} - Failed to send booking request`);
-      }
-
-      // Send confirmation email to the user
-      const confirmationSubject = `Growth Diagnostic Confirmation - ${serviceLabel}`;
-      const confirmationBody = `<div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-    <div style="background: linear-gradient(135deg, #0d9488, #0f766e); color: white; padding: 20px; border-radius: 8px 8px 0 0; text-align: center;">
-        <h1 style="margin: 0; font-size: 24px; font-weight: bold;">Growth Diagnostic Booked!</h1>
-    </div>
-    
-    <div style="background: #f8f9fa; padding: 20px; border: 1px solid #e9ecef; border-top: none;">
-        <div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-            <p style="color: #1e293b; font-size: 16px; margin: 0 0 15px 0;">Hello ${formData.full_name},</p>
-            <p style="color: #1e293b; font-size: 16px; margin: 0 0 15px 0;">Thank you for booking your Growth Diagnostic with CoreCrest! We've received your request and will confirm your appointment shortly.</p>
-            <p style="color: #1e293b; font-size: 16px; margin: 0;">You'll receive a follow-up email within 24 hours to confirm the exact time and provide any additional details.</p>
-        </div>
-        
-        <div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-            <h2 style="color: #0d9488; margin-top: 0; margin-bottom: 15px; font-size: 18px; border-bottom: 2px solid #0d9488; padding-bottom: 8px;">YOUR DIAGNOSTIC DETAILS</h2>
-            <table style="width: 100%; border-collapse: collapse;">
-                <tr><td style="padding: 8px 0; font-weight: bold; color: #1e293b; width: 30%;">Service Interest:</td><td style="padding: 8px 0; background: #dcfce7; padding: 8px; border-radius: 4px; color: #0f766e;">${serviceLabel}</td></tr>
-                <tr><td style="padding: 8px 0; font-weight: bold; color: #1e293b;">Preferred Date:</td><td style="padding: 8px 0;">${formattedDate}</td></tr>
-                <tr><td style="padding: 8px 0; font-weight: bold; color: #1e293b;">Preferred Time:</td><td style="padding: 8px 0;">${formData.preferred_time} (Rwanda Time)</td></tr>
-                <tr><td style="padding: 8px 0; font-weight: bold; color: #1e293b;">Submitted:</td><td style="padding: 8px 0;">${new Date().toLocaleString()}</td></tr>
-            </table>
-        </div>
-        
-        <div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-            <h2 style="color: #0d9488; margin-top: 0; margin-bottom: 15px; font-size: 18px; border-bottom: 2px solid #0d9488; padding-bottom: 8px;">WHAT HAPPENS NEXT?</h2>
-            <p style="color: #1e293b; font-size: 14px; margin: 0 0 10px 0;">Our team will review your request and send you a confirmation email within 24 hours with:</p>
-            <ul style="color: #1e293b; font-size: 14px; margin: 0; padding-left: 20px;">
-                <li>Confirmed appointment date and time</li>
-                <li>Meeting details (video call link or location)</li>
-                <li>What to prepare for the diagnostic</li>
-            </ul>
-        </div>
-        
-        <div style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-            <h2 style="color: #0d9488; margin-top: 0; margin-bottom: 15px; font-size: 18px; border-bottom: 2px solid #0d9488; padding-bottom: 8px;">NEED TO MAKE CHANGES?</h2>
-            <p style="color: #1e293b; font-size: 14px; margin: 0 0 10px 0;">If you need to reschedule or have any questions, please contact us:</p>
-            <p style="color: #1e293b; font-size: 14px; margin: 0;">
-                Email: <a href="mailto:info@corecrest.tech" style="color: #0d9488; text-decoration: none;">info@corecrest.tech</a><br>
-                Phone: <a href="tel:+250788863783" style="color: #0d9488; text-decoration: none;">+250 788 863 783</a>
-            </p>
-        </div>
-    </div>
-    
-    <div style="background: #1e293b; color: white; padding: 15px; border-radius: 0 0 8px 8px; text-align: center; font-size: 12px;">
-        <p style="margin: 0;">CoreCrest - Practical Tech Solutions for Small Businesses</p>
-        <p style="margin: 5px 0 0 0;">Kigali, Rwanda | <a href="mailto:info@corecrest.tech" style="color: #0d9488; text-decoration: none;">info@corecrest.tech</a></p>
-    </div>
-</div>`;
-
-      try {
-        await fetch('https://bff.corecrest.tech/api/submit/contact', {
-          method: 'POST',
-          headers: {
-            'accept': 'application/json',
-            'Content-Type': 'application/json',
-            'Origin': window.location.origin,
-          },
-          credentials: 'omit',
-          mode: 'cors',
-          body: JSON.stringify({
-            recipient: formData.email,
-            subject: confirmationSubject,
-            body: confirmationBody,
-            body_type: 'html',
-            content_encoding: 'plain',
-            priority: 2,
-            notification_type: 'email',
-            source: 'corecrest-consultation-confirmation'
-          })
-        });
-      } catch (confirmationError) {
-        // Log but don't fail the main submission if confirmation email fails
-        console.error('Failed to send confirmation email:', confirmationError);
-      }
-
       setIsSubmitted(true);
     } catch (error: unknown) {
       console.error('Error sending booking request:', error);
-      if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
-        alert('Unable to connect to the server. Please check your internet connection and try again.');
-      } else {
-        alert((error instanceof Error ? error.message : 'Failed to send booking request. Please try again later.'));
-      }
+      setSubmitError(
+        error instanceof TypeError && error.message.includes('Failed to fetch')
+          ? 'Unable to connect to the server. Please check your internet connection and try again.'
+          : 'Something went wrong sending your booking. Please try again, or email us directly at info@corecrest.tech.'
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -331,7 +197,9 @@ export default function BookConsultation() {
                 className="lg:col-span-2"
               >
                 <div className="bg-white rounded-3xl shadow-xl border border-slate-200/50 p-8 md:p-10">
-                  <form onSubmit={handleSubmit} className="space-y-8">
+                  <form onSubmit={handleSubmit} className="space-y-8 relative">
+                    <HoneypotField value={honeypot} onChange={setHoneypot} />
+
                 {/* Personal Information Section */}
                 <div className="space-y-6">
                   <div className="pb-4 border-b border-slate-200">
@@ -535,6 +403,16 @@ export default function BookConsultation() {
                 </div>
 
                 <div className="pt-4">
+                  {submitError && (
+                    <div
+                      role="alert"
+                      className="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700"
+                    >
+                      <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+                      <span>{submitError}</span>
+                    </div>
+                  )}
+
                   <Button
                     type="submit"
                     disabled={isSubmitting}
