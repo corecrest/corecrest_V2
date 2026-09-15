@@ -10,6 +10,7 @@ import BlogPost from './Pages/BlogPost';
 import Contact from './Pages/Contact';
 import BookConsultation from './Pages/BookConsultation';
 import PrivacyPolicy from './Pages/PrivacyPolicy';
+import MontraPrivacyPolicy from './Pages/MontraPrivacyPolicy';
 import TermsOfService from './Pages/TermsOfService';
 import NotFound from './Pages/NotFound';
 
@@ -27,6 +28,7 @@ function App() {
         <Route path="/book-consultation" element={<Layout currentPageName="BookConsultation"><BookConsultation /></Layout>} />
         <Route path="/privacy-policy" element={<Layout><PrivacyPolicy /></Layout>} />
         <Route path="/terms-of-service" element={<Layout><TermsOfService /></Layout>} />
+        <Route path="/montra/privacy-policy" element={<Layout><MontraPrivacyPolicy /></Layout>} />
         <Route path="*" element={<Layout><NotFound /></Layout>} />
       </Routes>
     </BrowserRouter>
