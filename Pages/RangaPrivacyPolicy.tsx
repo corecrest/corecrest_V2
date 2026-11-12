@@ -296,7 +296,12 @@ export default function RangaPrivacyPolicy() {
             <Section icon={Trash2} title="How long data is kept, and deleting it" delay={0.55}>
               <List>
                 <li>
-                  Your data stays on your phone until you delete it in the app or uninstall Ranga.
+                  Your data stays on your phone until you uninstall Ranga or clear its storage in
+                  Android settings (Settings → Apps → Ranga → Storage → Clear storage).
+                </li>
+                <li>
+                  Inside the app you can archive accounts, categories and recipients, and reverse
+                  transactions. These stay on your phone but no longer count.
                 </li>
                 <li>Uninstalling Ranga removes all of its data from your phone.</li>
                 <li>
@@ -318,7 +323,7 @@ export default function RangaPrivacyPolicy() {
                 <li>view it in the app;</li>
                 <li>change it in the app;</li>
                 <li>export it as a CSV file or an encrypted backup;</li>
-                <li>delete it in the app, or by uninstalling Ranga.</li>
+                <li>erase it by uninstalling Ranga or clearing its storage.</li>
               </List>
               <p>
                 If you have a question or a complaint, write to us at <EmailLink />.
