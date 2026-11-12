@@ -6,6 +6,7 @@ import {
   Database,
   PenLine,
   MessageSquare,
+  MessageSquareText,
   Phone,
   Fingerprint,
   Globe,
@@ -18,7 +19,7 @@ import {
 } from 'lucide-react';
 import SEO from '../components/SEO';
 
-const EFFECTIVE_DATE = '12 November 2026';
+const EFFECTIVE_DATE = '13 November 2026';
 const COMPANY_NAME = 'CoreCrest';
 const COMPANY_ADDRESS = 'Kigali, Rwanda';
 const CONTACT_EMAIL = 'info@corecrest.tech';
@@ -121,8 +122,8 @@ export default function RangaPrivacyPolicy() {
                 personal data.
               </li>
               <li>
-                <strong>Notification access is optional.</strong> If you turn it on, Ranga reads
-                payment messages only from the senders you choose.
+                <strong>SMS access is optional.</strong> If you allow it, Ranga reads texts only
+                from the money senders you choose, and only on your phone.
               </li>
               <li>
                 <strong>Ranga never sees your mobile money PIN.</strong> You enter it in your
@@ -171,16 +172,108 @@ export default function RangaPrivacyPolicy() {
               </List>
             </Section>
 
-            <Section icon={PenLine} title="Data you enter" delay={0.25}>
+            <Section icon={PenLine} title="Data you enter, and data Ranga records" delay={0.25}>
               <p>This data is kept only on your phone:</p>
               <List>
                 <li>Your name and phone number, if you add them in Profile. Both are optional.</li>
                 <li>Your accounts and balances, transactions, categories and notes.</li>
                 <li>Saved recipients: names, phone numbers and merchant codes.</li>
+                <li>
+                  Accounts, transactions and balances Ranga records from your texts, if you allow SMS
+                  or notification access.
+                </li>
               </List>
             </Section>
 
-            <Section icon={MessageSquare} title="Notification access (optional)" delay={0.3}>
+            <Section icon={MessageSquareText} title="SMS access (optional)" delay={0.3}>
+              <p>
+                <strong className="text-slate-900">What it is.</strong> Ranga can ask for two
+                Android permissions, "Read SMS" and "Receive SMS". Both are off unless you allow
+                them. Ranga works without them.
+              </p>
+              <p>
+                <strong className="text-slate-900">What it is used for.</strong> Ranga uses them only
+                to read money texts from the senders you choose. That lets it record your
+                transactions, confirm payments and keep balances up to date automatically. The
+                senders are:
+              </p>
+              <List>
+                <li>MTN MoMo: "M-Money" and "MoMo"</li>
+                <li>
+                  Bank of Kigali: "BKeBANK" and "BK BANK" (older texts may say "BKeBank" or "BK
+                  Bank")
+                </li>
+              </List>
+              <p>
+                <strong className="text-slate-900">What it reads.</strong>
+              </p>
+              <List>
+                <li>
+                  Ranga reads only texts from those senders. It does not read your other texts or
+                  your conversations.
+                </li>
+                <li>
+                  Texts from a chosen sender that aren't about money, or that Ranga can't understand,
+                  are ignored.
+                </li>
+              </List>
+              <p>
+                <strong className="text-slate-900">Past texts.</strong> When you first allow SMS
+                access, Ranga reads the last 6 months of texts from your chosen senders, once. It
+                uses them to rebuild your accounts' history and balances. You can run it again from
+                Profile. Texts you deleted can't be read.
+              </p>
+              <p>
+                <strong className="text-slate-900">New texts.</strong> Ranga reads each new text from
+                a chosen sender when it arrives, even when Ranga is closed. A text that arrives while
+                Ranga is closed is held on your phone, encrypted, until Ranga records it. Then it is
+                removed.
+              </p>
+              <p>
+                <strong className="text-slate-900">Finding your accounts.</strong> Ranga looks
+                through these texts for the accounts they are about:
+              </p>
+              <List>
+                <li>
+                  your MoMo wallet, and the last 4 digits of its phone number, taken from transfers
+                  between your bank and MoMo
+                </li>
+                <li>your Bank of Kigali accounts, by the last 4 digits of the account number</li>
+                <li>each account's latest balance</li>
+              </List>
+              <p>
+                It shows them to you as suggestions. Nothing is added unless you choose it. Accounts
+                you turn down are remembered on your phone so they aren't suggested again.
+              </p>
+              <p>
+                <strong className="text-slate-900">Checking texts.</strong> Ranga compares each
+                text's balance with the one before it. A text that doesn't fit, such as a faked one,
+                is set aside for you to confirm or reject.
+              </p>
+              <p>
+                <strong className="text-slate-900">What it keeps.</strong> Texts are turned into
+                transaction records and account details, stored encrypted on your phone. MoMo service
+                notices are kept on your phone, encrypted. Ranga does not keep a copy of the texts
+                themselves.
+              </p>
+              <p>
+                <strong className="text-slate-900">Nothing leaves your phone.</strong> No text, or
+                anything taken from one, is sent to us or to anyone else. It is never used for
+                advertising or sold.
+              </p>
+              <p>
+                <strong className="text-slate-900">You stay in control.</strong> You can turn senders
+                off in Ranga, or remove SMS access in Android settings (Settings → Apps → Ranga →
+                Permissions → SMS), at any time. Records already made stay on your phone until you
+                delete them, as described under "How long data is kept".
+              </p>
+            </Section>
+
+            <Section icon={MessageSquare} title="Notification access (optional)" delay={0.32}>
+              <p>
+                If you don't allow SMS access, Ranga can use notification access instead, to read new
+                payment messages as they arrive. It can't read past texts this way.
+              </p>
               <p>
                 Notification access is off unless you turn it on in Android settings. Ranga works
                 without it.
@@ -304,6 +397,11 @@ export default function RangaPrivacyPolicy() {
                   transactions. These stay on your phone but no longer count.
                 </li>
                 <li>Uninstalling Ranga removes all of its data from your phone.</li>
+                <li>
+                  Removing SMS or notification access stops Ranga reading new texts. It doesn't
+                  delete what Ranga already recorded. Clear Ranga's storage or uninstall it to delete
+                  everything.
+                </li>
                 <li>
                   Backups or exports you saved somewhere else stay there until you delete them.
                 </li>
