@@ -18,11 +18,10 @@ import {
 } from 'lucide-react';
 import SEO from '../components/SEO';
 
-// TODO: fill in these placeholders before publishing.
-const EFFECTIVE_DATE = '[date]';
-const COMPANY_NAME = '[legal company name]';
-const COMPANY_ADDRESS = '[address]';
-const CONTACT_EMAIL = '[email]';
+const EFFECTIVE_DATE = '12 November 2026';
+const COMPANY_NAME = 'CoreCrest';
+const COMPANY_ADDRESS = 'Kigali, Rwanda';
+const CONTACT_EMAIL = 'info@corecrest.tech';
 
 // This wording has to match what the app does and what the Play Data safety
 // form says. Only change it when the app changes.
